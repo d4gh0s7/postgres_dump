@@ -3,4 +3,6 @@
 
 postgresql_version: 0
 
-postgresql_dump_params: --clean  --if-exists
+postgresql_dump_params:
+  - clean
+  - if-exists

@@ -1,12 +1,5 @@
 ---
-# tasks file for postgres_dump
-
-- name: Debug postgresql params
-  debug:
-    msg: "{{ command_params }}"
-  tags:
-    - test
-  delegate_to: localhost
+# tasks file for postgres_dump.
 
 - name: Determine the running postgresql version
   shell: psql -V | egrep -o '[0-9]{1,}\.[0-9]{1,}' # Major.Minor version
@@ -37,7 +30,10 @@
 - name: Execute the postgresql full dump
   become: Yes
   become_user: "{{ postgresql_backup_owner }}"
-  command: pg_dumpall --clean --if-exists -U {{ postgresql_backup_owner }} --file {{ postgresql_dump_filename }}
+  command: |
+     pg_dumpall {% for command_flag in postgresql_dump_params %}--{{ command_flag }} {% endfor %} \
+     -U {{ postgresql_backup_owner }} \
+     --file {{ postgresql_dump_filename }}
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
   changed_when: No
