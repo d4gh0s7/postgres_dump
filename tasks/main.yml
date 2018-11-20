@@ -1,0 +1,85 @@
+---
+# tasks file for postgres_dump
+
+- name: Determine the running postgresql version
+  shell: psql -V | egrep -o '[0-9]{1,}\.[0-9]{1,}' # Major.Minor version
+  register: pg_version
+  changed_when: No
+
+- name: Store the postgresql version in postgresql_version
+  set_fact: postgresql_version="{{ pg_version.stdout }}"
+
+- name: Collect facts about system services
+  service_facts:
+  register: services_state
+  tags:
+    - skip_ansible_lint
+
+- name: Determine if postgresql-{{ postgresql_version }} is running
+  assert:
+    that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
+  tags:
+    - skip_ansible_lint
+
+- name: Determine the postgresql dump file name
+  set_fact: postgresql_dump_filename=full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql
+
+- name: Set the full path of the postgresql dump
+  set_fact: postgresql_dump_fullpath={{ postgres_base_dump_folder }}/{{ postgresql_version }}/backups
+
+- name: Execute the postgresql full dump
+  become: Yes
+  become_user: "{{ postgresql_backup_owner }}"
+  command: pg_dumpall --clean --if-exists -U {{ postgresql_backup_owner }} --file {{ postgresql_dump_filename }}
+  args:
+    chdir: "{{ postgresql_dump_fullpath }}"
+  changed_when: No
+
+- name: Stat the full postgresql full dump
+  stat:
+    path: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}"
+    checksum_algorithm: sha256
+    get_checksum: Yes
+  register: postgres_dump_info
+
+- name: Save the checksum file's path and name in a variable
+  set_fact: checksum_file={{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.sha256_checksum
+  when: postgres_dump_info
+
+- name: Store the postgresql full dump file checksum to the file system
+  lineinfile:
+    create: Yes
+    path: "{{ checksum_file }}"
+    line: "{{ postgres_dump_info.stat.checksum }} {{ postgresql_dump_filename }}"
+    owner: "{{ postgresql_backup_owner }}"
+    group: "{{ postgresql_backup_owner }}"
+    mode: 0400
+
+- name: Run the checksum validation
+  command: sha256sum --check {{ checksum_file }}
+  args:
+    chdir: "{{ postgresql_dump_fullpath }}"
+  register: checksum_validation
+  changed_when: No
+
+- name: Prove that the checksum validation succeeded
+  assert:
+    that:
+     - "'OK' in checksum_validation.stdout"
+
+- name: Create a compressed archive of the postgresql full dump
+  archive:
+    path:
+      - "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}"
+      - "{{ checksum_file }}"
+    dest: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.gz"
+    owner: "{{ postgresql_backup_owner }}"
+    group: "{{ postgresql_backup_owner }}"
+    mode: 0400
+    remove: Yes
+    format: gz
+  register: postgresql_dump_stored
+
+- name: List the archived files
+  debug:
+    var: postgresql_dump_stored.archived

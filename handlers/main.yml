@@ -1,0 +1,8 @@
+---
+# handlers file for postgres_dump
+
+- name: Start postgresql-{{ postgresql_version }}
+  systemd:
+    state: started
+    name: postgresql-{{ postgresql_version }}
+  register: pg_status

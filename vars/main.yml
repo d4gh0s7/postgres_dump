@@ -1,0 +1,4 @@
+---
+# vars file for postgres_dump
+
+postgresql_version: 0
