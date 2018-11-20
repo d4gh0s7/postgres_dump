@@ -1,15 +1,12 @@
 # postgres_dump
-=========
 
 Ansible role to run a full postgresql database dump.
 
-Requirements
-------------
+## Requirements
 
 Minimum required ansible version **2.5.0**
 
-Role Variables
---------------
+## Role Variables
 
 Variables set in `defaults/main.yml`:
 
@@ -30,8 +27,7 @@ Variables set in `vars/main.yml`:
 postgresql_version: 0
 ```
 
-Example Playbook
-----------------
+## Example Playbook
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
@@ -39,12 +35,10 @@ Including an example of how to use your role (for instance, with variables passe
       roles:
          - { role: username.rolename, x: 42 }
 
-License
--------
+## License
 
-BSD
+**CC0 1.0**
 
-Author Information
-------------------
+## Author Information
 
 [Francesco Cosentino](https://www.linkedin.com/in/francesco-cosentino/) <fc@hyperd.io>
