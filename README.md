@@ -6,7 +6,7 @@ Ansible role to run a full postgresql database dump.
 Requirements
 ------------
 
-Minimum ansible version **2.5.0**
+Minimum required ansible version **2.5.0**
 
 Role Variables
 --------------
