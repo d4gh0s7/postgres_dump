@@ -2,7 +2,3 @@
 # vars file for postgres_dump
 
 postgresql_version: 0
-
-postgresql_dump_params:
-  - clean
-  - if-exists
