@@ -1,6 +1,13 @@
 ---
 # tasks file for postgres_dump
 
+- name: Debug postgresql params
+  debug:
+    msg: "{{ command_params }}"
+  tags:
+    - test
+  delegate_to: localhost
+
 - name: Determine the running postgresql version
   shell: psql -V | egrep -o '[0-9]{1,}\.[0-9]{1,}' # Major.Minor version
   register: pg_version
