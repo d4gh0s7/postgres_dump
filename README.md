@@ -18,6 +18,13 @@ postgres_base_dump_folder: /var/lib/pgsql
 
 # The user that will execute and own the backup.
 postgresql_backup_owner: postgres
+
+# The options passed to the pg_dumpall command
+# For a full list check the postgresql documentation at:
+# https://www.postgresql.org/docs/11/app-pg-dumpall.html
+postgresql_dump_params:
+  - --clean
+  - --if-exists
 ```
 
 Variables set in `vars/main.yml`:

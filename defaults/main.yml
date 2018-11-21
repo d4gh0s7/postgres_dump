@@ -6,5 +6,5 @@ postgres_base_dump_folder: /var/lib/pgsql
 postgresql_backup_owner: postgres
 
 postgresql_dump_params:
-  - clean
-  - if-exists
+  - --clean
+  - --if-exists
