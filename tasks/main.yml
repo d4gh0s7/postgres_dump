@@ -87,6 +87,4 @@
 - name: List the archived files
   debug:
     var: postgresql_dump_stored.archived
-
-- name: Move the backup to {{ backup_storage_path }} 
-  when: "{{ backup_storage_path }}" is defined
+...

@@ -8,3 +8,4 @@ postgresql_backup_owner: postgres
 postgresql_dump_params:
   - --clean
   - --if-exists
+...
