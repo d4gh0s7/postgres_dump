@@ -13,6 +13,7 @@
 - name: Collect facts about system services
   service_facts:
   register: services_state
+  when: ensure_postgresql_is_running
   tags:
     - skip_ansible_lint
 
@@ -47,6 +48,7 @@
      --file {{ postgresql_dump_filename }}
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
+  no_log: Yes
   changed_when: No
 
 - name: Stat the full postgresql full dump

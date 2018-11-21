@@ -9,4 +9,4 @@ postgresql_version: 0
 ensure_postgresql_is_running: Yes
 
 # Set cleanup_after_backup to No, to store the backup files along with the compressed version
-cleanup_after_backup: No
+cleanup_after_backup: Yes

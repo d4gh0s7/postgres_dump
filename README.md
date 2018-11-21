@@ -46,13 +46,14 @@ Use the role as follow:
 
 ```yaml
 - hosts:
-    - all
+    - postgresql_databases
   become: True
   gather_facts: True
   vars_files:
     - ./group_vars/all.yml
   roles:
     - postgres_dump
+      
  ```
 
 ## License
