@@ -1,11 +1,11 @@
 ---
 # defaults file for postgres_dump
 
-postgres_base_dump_folder: /var/lib/pgsql
+postgres_base_folder: /var/lib/pgsql
 
 postgresql_backup_owner: postgres
 
-postgresql_dump_params:
+postgresql_dumpall_params:
   - --clean
   - --if-exists
 ...

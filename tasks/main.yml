@@ -8,7 +8,7 @@
 
 - name: Store the postgresql version in postgresql_version
   set_fact: postgresql_version="{{ pg_version.stdout }}"
-  when: pg_version
+  when: pg_version and postgresql_version == 0
 
 - name: Collect facts about system services
   service_facts:
@@ -19,6 +19,7 @@
 - name: Determine if postgresql-{{ postgresql_version }} is running
   assert:
     that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
+  when: ensure_postgresql_is_running
   tags:
     - skip_ansible_lint
 
@@ -26,13 +27,22 @@
   set_fact: postgresql_dump_filename=full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql
 
 - name: Set the full path of the postgresql dump
-  set_fact: postgresql_dump_fullpath={{ postgres_base_dump_folder }}/{{ postgresql_version }}/backups
+  set_fact: postgresql_dump_fullpath={{ postgres_base_folder }}/{{ postgresql_version }}/backups
+
+- name: Stat if the backups path
+  stat:
+    path: "{{ postgresql_dump_fullpath }}"
+  register: pg_backups_path
+
+- name: Determine if the backups path exists
+  assert:
+    that: pg_backups_path.stat.exists and pg_backups_path.stat.isdir
 
 - name: Execute the postgresql full dump
   become: Yes
   become_user: "{{ postgresql_backup_owner }}"
   command: |
-     pg_dumpall {% for command_flag in postgresql_dump_params %} {{ command_flag }} {% endfor %} \
+     pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
      -U {{ postgresql_backup_owner }} \
      --file {{ postgresql_dump_filename }}
   args:
@@ -80,7 +90,7 @@
     owner: "{{ postgresql_backup_owner }}"
     group: "{{ postgresql_backup_owner }}"
     mode: 0400
-    remove: Yes
+    remove: "{{ cleanup_after_backup }}"
     format: gz
   register: postgresql_dump_stored
 

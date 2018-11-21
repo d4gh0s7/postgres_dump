@@ -1,4 +1,12 @@
 ---
 # vars file for postgres_dump
 
+# Dynamically determined within the main task
+# Version format: Major.Minor
 postgresql_version: 0
+
+# Set to No to skip the service postgresql status task
+ensure_postgresql_is_running: Yes
+
+# Set cleanup_after_backup to No, to store the backup files along with the compressed version
+cleanup_after_backup: No

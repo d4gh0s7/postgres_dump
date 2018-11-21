@@ -32,6 +32,12 @@ Variables set in `vars/main.yml`:
 ```yaml
 # Variable used to store the postgresql version in Major.Minor format.
 postgresql_version: 0
+
+# Set cleanup_after_backup to No, to store the backup files along with the compressed version
+cleanup_after_backup: Yes
+
+# Set to No to skip the service postgresql status task
+ensure_postgresql_is_running: Yes
 ```
 
 ## Example Playbook
