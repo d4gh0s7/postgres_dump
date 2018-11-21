@@ -62,4 +62,4 @@ Use the role as follow:
 
 ## Author Information
 
-[Francesco Cosentino](https://www.linkedin.com/in/francesco-cosentino/) <fc@hyperd.io>
+[Francesco Cosentino](https://www.linkedin.com/in/francesco-cosentino/) <fc@hyperd.sh>
