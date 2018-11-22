@@ -10,4 +10,5 @@ postgresql_backup_owner: postgres
 postgresql_dumpall_params:
   - --clean
   - --if-exists
+  - --no-password
 ...
