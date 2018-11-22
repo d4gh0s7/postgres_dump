@@ -17,6 +17,7 @@ Variables set in `defaults/main.yml`:
 postgres_base_dump_folder: /var/lib/pgsql
 
 # The user that will execute the backup.
+# Before changing this, be sure to setup properly the authentication
 postgresql_backup_executor: postgres
 
 # The user that will own the backup.
@@ -25,9 +26,10 @@ postgresql_backup_owner: postgres
 # The options passed to the pg_dumpall command
 # For a full list check the postgresql documentation at:
 # https://www.postgresql.org/docs/11/app-pg-dumpall.html
-postgresql_dump_params:
+postgresql_dumpall_params:
   - --clean
   - --if-exists
+  - --no-password
 ```
 
 Variables set in `vars/main.yml`:
