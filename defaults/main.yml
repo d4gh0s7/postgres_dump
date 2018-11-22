@@ -3,6 +3,8 @@
 
 postgres_base_folder: /var/lib/pgsql
 
+postgresql_backup_executor: postgres
+
 postgresql_backup_owner: postgres
 
 postgresql_dumpall_params:

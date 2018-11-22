@@ -10,19 +10,41 @@
   set_fact: postgresql_version="{{ pg_version.stdout }}"
   when: pg_version and postgresql_version == 0
 
-- name: Collect facts about system services
-  service_facts:
-  register: services_state
-  when: ensure_postgresql_is_running
-  tags:
-    - skip_ansible_lint
+- block:
+  - name: Collect facts about system services
+    service_facts:
+    register: services_state
+    tags:
+      - skip_ansible_lint
 
-- name: Determine if postgresql-{{ postgresql_version }} is running
-  assert:
-    that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
+  - name: Determine if postgresql-{{ postgresql_version }} is running
+    assert:
+      that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
+    tags:
+      - skip_ansible_lint
+
+  - block:
+    - name: Generate a random string to set the postgresql username
+      shell: dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2- | rev
+      register: pg_username
+
+    - name: Provision pg user
+      command: |
+         createuser --username={{ postgresql_backup_owner }} \
+         -w \
+         --role={{ postgresql_backup_owner }} \
+         --connection-limit=2 \
+         --no-replication -l -i -S -D -R -e test_user
+      become: Yes
+      become_user: "{{ postgresql_backup_owner }}"
+      register: pg_user_created
+
+    - name: Set the postgresql_backup_executor
+      set_fact: postgresql_backup_executor=test_user
+    
+    when: provision_temporary_user
+
   when: ensure_postgresql_is_running
-  tags:
-    - skip_ansible_lint
 
 - name: Determine the postgresql dump file name
   set_fact: postgresql_dump_filename=full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql
@@ -39,17 +61,43 @@
   assert:
     that: pg_backups_path.stat.exists and pg_backups_path.stat.isdir
 
+# - name: Execute the postgresql full dump
+#   become: Yes
+#   become_user: "{{ postgresql_backup_owner }}"
+#   command: |
+#      pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
+#      -U {{ postgresql_backup_executor }} \
+#      -h 127.0.0.1 \
+#      --no-password \
+#      --file {{ postgresql_dump_filename }}
+#   args:
+#     chdir: "{{ postgresql_dump_fullpath }}"
+#   no_log: No
+#   changed_when: No
+
 - name: Execute the postgresql full dump
   become: Yes
   become_user: "{{ postgresql_backup_owner }}"
-  command: |
-     pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
-     -U {{ postgresql_backup_owner }} \
-     --file {{ postgresql_dump_filename }}
-  args:
-    chdir: "{{ postgresql_dump_fullpath }}"
-  no_log: Yes
+  expect:
+    command: |
+       pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
+       -U {{ postgresql_backup_executor }} \
+       -h 127.0.0.1 \
+       --password \
+       --file {{ postgresql_dump_filename }}
+    # args:
+    #   chdir: "{{ postgresql_dump_fullpath }}"
+    responses:
+      Question:
+        - secret
+  no_log: No
   changed_when: No
+
+- name: Drop pg user
+  command: dropuser {{ pg_username.stdout }}
+  become: Yes
+  become_user: "{{ postgresql_backup_owner }}"
+  when: pg_user_created is defined
 
 - name: Stat the full postgresql full dump
   stat:

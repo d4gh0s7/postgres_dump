@@ -10,3 +10,7 @@ ensure_postgresql_is_running: Yes
 
 # Set cleanup_after_backup to No, to store the backup files along with the compressed version
 cleanup_after_backup: Yes
+
+# Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it
+# The user will be deleted immediateluy after
+provision_temporary_user: No

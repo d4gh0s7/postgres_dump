@@ -16,7 +16,10 @@ Variables set in `defaults/main.yml`:
 # The base path for the postgres dump storage.
 postgres_base_dump_folder: /var/lib/pgsql
 
-# The user that will execute and own the backup.
+# The user that will execute the backup.
+postgresql_backup_executor: postgres
+
+# The user that will own the backup.
 postgresql_backup_owner: postgres
 
 # The options passed to the pg_dumpall command
