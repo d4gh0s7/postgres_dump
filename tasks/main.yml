@@ -23,6 +23,31 @@
     tags:
       - skip_ansible_lint
 
+  - block:
+    - name: Generate a random username
+      shell: echo $RANDOM | tr '[0-9]' '[a-zA-Z]'
+      register: random_username
+
+    - name: Generate a random string
+      command: openssl rand -base64 24
+      register: random_string
+
+    - name: Create postgresql temporary user
+      become: Yes
+      become_user: postgres
+      command: createuser --encrypted --no-password -D -R -s -l --replication {{ random_username.stdout }}
+      register: postgresql_termporary_user_created
+
+    - name: Alter temporary role
+      become: Yes
+      become_user: postgres
+      command: psql --command="ALTER USER {{ random_username.stdout }} WITH PASSWORD '{{ random_string.stdout }}';"
+
+    - name: Set fact for the new backup postgresql_backup_executor
+      set_fact: postgresql_backup_executor={{ random_username.stdout }}
+
+    when: provision_temporary_user
+
   when: ensure_postgresql_is_running
 
 - name: Determine the postgresql dump file name
@@ -46,11 +71,47 @@
   command: |
      pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
      -U {{ postgresql_backup_executor }} \
+     --no-password \
      --file {{ postgresql_dump_filename }}
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
   no_log: No
   changed_when: No
+  when: not provision_temporary_user
+
+- block:
+
+  - name: Save the postgresql_backup_log_file path and name in a variable
+    set_fact: postgresql_backup_log_file={{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.log
+
+  - name: Log the postgresql_backup_executor to the file system
+    lineinfile:
+      create: Yes
+      path: "{{ postgresql_backup_log_file }}"
+      line: "{{ random_username.stdout }}"
+      owner: "{{ postgresql_backup_owner }}"
+      group: "{{ postgresql_backup_owner }}"
+      mode: 0400
+    tags:
+      - skip_ansible_lint
+
+  - name: Execute the postgresql full dump as temporary user
+    expect:
+      command: pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} -h 127.0.0.1 -U {{ postgresql_backup_executor }} -W --file {{ postgresql_dump_filename }}
+      chdir: "{{ postgresql_dump_fullpath }}"
+      responses:
+        Password: "{{ random_string.stdout }}"
+    no_log: No
+    changed_when: No
+    tags:
+      - skip_ansible_lint
+
+  - name: Drop the temporary_user
+    command: dropuser "{{ postgresql_backup_executor }}"
+
+  become: Yes
+  become_user: "{{ postgresql_backup_owner }}"
+  when: provision_temporary_user
 
 - name: Stat the full postgresql full dump
   stat:
@@ -89,6 +150,7 @@
     path:
       - "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}"
       - "{{ checksum_file }}"
+      - "{{ postgresql_backup_log_file }}"
     dest: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.gz"
     owner: "{{ postgresql_backup_owner }}"
     group: "{{ postgresql_backup_owner }}"

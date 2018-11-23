@@ -29,7 +29,6 @@ postgresql_backup_owner: postgres
 postgresql_dumpall_params:
   - --clean
   - --if-exists
-  - --no-password
 ```
 
 Variables set in `vars/main.yml`:
@@ -43,6 +42,11 @@ cleanup_after_backup: Yes
 
 # Set to No to skip the service postgresql status task
 ensure_postgresql_is_running: Yes
+
+# Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it
+# The user will be deleted immediately after and the username will be logged to the file system
+# and included in the backup archive
+provision_temporary_user: Yes
 ```
 
 ## Example Playbook
