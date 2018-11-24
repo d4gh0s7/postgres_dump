@@ -2,7 +2,9 @@
 # vars file for postgres_dump
 
 # Dynamically determined within the main task
-# Version format: Major.Minor
+# postgresql version is stored in format: Major.Minor
+# This variable is merely used to determine the path of the postgresql backups folder;
+# set it manually only if you know what you are doing.
 postgresql_version: 0
 
 # Set to No to skip the service postgresql status task
