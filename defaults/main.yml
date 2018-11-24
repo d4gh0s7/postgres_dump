@@ -10,4 +10,8 @@ postgresql_backup_owner: postgres
 postgresql_dumpall_params:
   - --clean
   - --if-exists
+
+# Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it
+# The user will be deleted immediateluy after
+provision_temporary_user: Yes
 ...
