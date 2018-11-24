@@ -19,7 +19,11 @@ galaxy_info:
     - zesty
     - xenial
     - trusty
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> a7ce879b6e56b80c52fe3f6d9a8ea609a016d5ed
   galaxy_tags:
     - postgresql
     - postgres

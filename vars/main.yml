@@ -11,11 +11,8 @@ provision_temporary_user_grant_privileges_commands:
   - GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
   - GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
 
-# - name: Alter temporary user
-#   command: psql --command="ALTER DEFAULT PRIVILEGES IN SCHEMA pg_catalog GRANT SELECT ON TABLES TO {{ random_username.stdout }};"
-
-# - name: Alter temporary user
-#   command: psql --command="ALTER DEFAULT PRIVILEGES IN SCHEMA pg_catalog GRANT SELECT, USAGE ON SEQUENCES TO {{ random_username.stdout }};"
+# ALTER DEFAULT PRIVILEGES IN SCHEMA pg_catalog GRANT SELECT ON TABLES TO {{ postgresql_backup_executor }}
+# ALTER DEFAULT PRIVILEGES IN SCHEMA pg_catalog GRANT SELECT, USAGE ON SEQUENCES TO {{ postgresql_backup_executor }}
 
 provision_temporary_user_revoke_privileges_commands:
   - REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
