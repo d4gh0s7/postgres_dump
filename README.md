@@ -17,7 +17,8 @@ Variables set in `defaults/main.yml`:
 postgres_base_dump_folder: /var/lib/pgsql
 
 # The user that will execute the backup.
-# Before changing this, be sure to setup properly the authentication
+# Before changing this, be sure the authentication methods are compatible with your strategy
+# This variable will be overruled when provision_temporary_user is set to Yes
 postgresql_backup_executor: postgres
 
 # The user that will own the backup.
