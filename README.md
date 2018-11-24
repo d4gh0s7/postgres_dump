@@ -24,6 +24,15 @@ postgresql_backup_executor: postgres
 # Set the user that will own the backup.
 postgresql_backup_owner: postgres
 
+# Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it;
+# The user will be deleted immediately after the backup execution;
+# The username will be logged to the file system in a .log file archived with the backup.
+# This feature is still experimental, though currently stable.
+provision_temporary_user: Yes
+
+# Set to No to skip the service postgresql status task
+ensure_postgresql_is_running: Yes
+
 # The options passed to the pg_dumpall command
 # For a full list check the postgresql documentation at:
 # https://www.postgresql.org/docs/11/app-pg-dumpall.html
@@ -31,11 +40,18 @@ postgresql_dumpall_params:
   - --clean
   - --if-exists
 
-# Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it;
-# The user will be deleted immediately after the backup execution;
-# The username will be logged to the file system in a .log file archived with the backup.
-# This feature is still experimental, though currently stable.
-provision_temporary_user: Yes
+# Set cleanup_after_backup to No, to store the backup files along with the compressed version
+cleanup_after_backup: Yes
+```
+
+Variables set in `vars/main.yml`:
+
+```yaml
+# Dynamically determined within the main task.
+# The postgresql version is stored in format: Major.Minor
+# This variable is used merely to determine the path to the postgresql backups folder;
+# Set the value manually only if you know what you are doing.
+postgresql_version: 0
 
 # List the commands to run in order to grant the necessary privileges to the temporary user.
 provision_temporary_user_grant_privileges_commands:
@@ -49,22 +65,6 @@ provision_temporary_user_revoke_privileges_commands:
   - REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
 ```
 
-Variables set in `vars/main.yml`:
-
-```yaml
-# Dynamically determined within the main task.
-# The postgresql version is stored in format: Major.Minor
-# This variable is used merely to determine the path to the postgresql backups folder;
-# Set the value manually only if you know what you are doing.
-postgresql_version: 0
-
-# Set to No to skip the service postgresql status task
-ensure_postgresql_is_running: Yes
-
-# Set cleanup_after_backup to No, to store the backup files along with the compressed version
-cleanup_after_backup: Yes
-```
-
 ## Example Playbook
 
 Use the role as follow:
@@ -74,11 +74,13 @@ Use the role as follow:
     - postgresql_databases
   become: True
   gather_facts: True
-  vars_files:
-    - ./group_vars/all.yml
+
   roles:
     - postgres_dump
-      
+      provision_temporary_user: Yes
+      postgresql_dumpall_params:
+        - --clean
+        - --if-exists
  ```
 
 ## License

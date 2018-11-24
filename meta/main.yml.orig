@@ -1,0 +1,41 @@
+galaxy_info:
+  author: d4gh0s7
+  description: Ansible role to run a full postgresql database dump.
+  company: Hyper(d)
+  license: CC0 1.0
+  min_ansible_version: 2.5
+
+  platforms:
+  - name: Fedora
+    versions:
+    - 28
+    - 27
+    - 26
+  - name: EL
+    versions:
+    - 7
+  - name: Ubuntu
+    versions:
+    - zesty
+    - xenial
+    - trusty
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+=======
+ 
+>>>>>>> a7ce879b6e56b80c52fe3f6d9a8ea609a016d5ed
+=======
+
+>>>>>>> 7f2e0a28aa94e5c79642a6ea73ee9c3c47ce0722
+=======
+
+>>>>>>> 7f2e0a28aa94e5c79642a6ea73ee9c3c47ce0722
+  galaxy_tags:
+    - postgresql
+    - postgres
+    - dump
+    - backup
+
+dependencies: []
