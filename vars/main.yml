@@ -14,3 +14,4 @@ cleanup_after_backup: Yes
 # Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it
 # The user will be deleted immediateluy after
 provision_temporary_user: Yes
+...
