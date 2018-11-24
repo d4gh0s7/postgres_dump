@@ -58,7 +58,7 @@
 - name: Set the full path of the postgresql dump
   set_fact: postgresql_dump_fullpath={{ postgres_base_folder }}/{{ postgresql_version }}/backups
 
-- name: Stat if the backups path
+- name: Store the backup path in a variable
   stat:
     path: "{{ postgresql_dump_fullpath }}"
   register: pg_backups_path

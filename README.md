@@ -34,7 +34,10 @@ postgresql_dumpall_params:
 Variables set in `vars/main.yml`:
 
 ```yaml
-# Variable used to store the postgresql version in Major.Minor format.
+# Dynamically determined within the main task
+# postgresql version is stored in format: Major.Minor
+# This variable is merely used to determine the path of the postgresql backups folder;
+# set it manually only if you know what you are doing.
 postgresql_version: 0
 
 # Set cleanup_after_backup to No, to store the backup files along with the compressed version
@@ -44,8 +47,10 @@ cleanup_after_backup: Yes
 ensure_postgresql_is_running: Yes
 
 # Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it
-# The user will be deleted immediately after and the username will be logged to the file system
-# and included in the backup archive
+# The user will be deleted immediately after the backup execution;
+# the username will be logged to the file system
+# and included in the backup archive.
+# This feature is still beta.
 provision_temporary_user: Yes
 ```
 
