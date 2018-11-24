@@ -31,6 +31,7 @@
     - name: Generate a random string
       command: openssl rand -base64 24
       register: random_string
+      no_log: Yes
 
     - name: Create postgresql temporary user
       become: Yes
@@ -42,6 +43,7 @@
       become: Yes
       become_user: postgres
       command: psql --command="ALTER USER {{ random_username.stdout }} WITH PASSWORD '{{ random_string.stdout }}';"
+      no_log: Yes
 
     - name: Set fact for the new backup postgresql_backup_executor
       set_fact: postgresql_backup_executor={{ random_username.stdout }}
@@ -75,7 +77,7 @@
      --file {{ postgresql_dump_filename }}
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
-  no_log: No
+  no_log: Yes
   changed_when: No
   when: not provision_temporary_user
 
@@ -101,7 +103,7 @@
       chdir: "{{ postgresql_dump_fullpath }}"
       responses:
         Password: "{{ random_string.stdout }}"
-    no_log: No
+    no_log: Yes
     changed_when: No
     tags:
       - skip_ansible_lint
@@ -140,7 +142,7 @@
   register: checksum_validation
   changed_when: No
 
-- name: Prove that the checksum validation succeeded
+- name: Test the checksum validation
   assert:
     that:
      - "'OK' in checksum_validation.stdout"
