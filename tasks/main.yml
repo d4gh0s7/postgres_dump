@@ -14,8 +14,6 @@
   - name: Collect facts about system services
     service_facts:
     register: services_state
-    tags:
-      - skip_ansible_lint
 
   - name: Determine if postgresql-{{ postgresql_version }} is running
     assert:
@@ -105,8 +103,6 @@
         Password: "{{ random_string.stdout }}"
     no_log: Yes
     changed_when: No
-    tags:
-      - skip_ansible_lint
 
   - name: Drop the temporary_user
     command: dropuser "{{ postgresql_backup_executor }}"
