@@ -50,7 +50,7 @@
 
     when: provision_temporary_user
 
-  when: ensure_postgresql_is_running
+  when: ensure_postgresql_is_running or provision_temporary_user
 
 - name: Determine the postgresql dump file name
   set_fact: postgresql_dump_filename=full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql

@@ -13,5 +13,5 @@ postgresql_dumpall_params:
 
 # Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it
 # The user will be deleted immediateluy after
-provision_temporary_user: Yes
+provision_temporary_user: No
 ...
