@@ -18,8 +18,8 @@
   - name: Determine if postgresql-{{ postgresql_version }} is running
     assert:
       that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
-    tags:
-      - skip_ansible_lint
+    # tags:
+    #   - skip_ansible_lint
 
   - block:
     - name: Generate a random username
