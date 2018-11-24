@@ -33,16 +33,16 @@
 
     - name: Create postgresql temporary user
       command: createuser --no-password -S -D {{ random_username.stdout }}
-      # command: createuser --encrypted --no-password -D -R -s -l --replication {{ random_username.stdout }}
       register: postgresql_termporary_user_created
 
-    - name: Set up temporary user
+    - name: Set up the temporary user
       command: psql --command="ALTER USER {{ random_username.stdout }} WITH PASSWORD '{{ random_string.stdout }}';"
+      no_log: Yes
 
     - name: Set fact for the new backup postgresql_backup_executor
       set_fact: postgresql_backup_executor={{ random_username.stdout }}
 
-    - name: Grant privileges to temporary user
+    - name: Grant privileges to the temporary user
       command: psql --command="{{ item }}";
       loop: "{{ provision_temporary_user_grant_privileges_commands }}"
 
