@@ -8,6 +8,7 @@
 postgresql_version: 0
 
 # Set to No to skip the service postgresql status task
+# When set to No, this variable can be overruled if provision_temporary_user is set to Yes
 ensure_postgresql_is_running: Yes
 
 # Set cleanup_after_backup to No, to store the backup files along with the compressed version
