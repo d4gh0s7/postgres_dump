@@ -10,7 +10,8 @@
   set_fact: postgresql_version="{{ pg_version.stdout }}"
   when: pg_version and postgresql_version == 0
 
-- block:
+- name: Ensure postgresql is running
+  block:
   - name: Collect facts about system services
     service_facts:
     register: services_state
@@ -18,10 +19,9 @@
   - name: Determine if postgresql-{{ postgresql_version }} is running
     assert:
       that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
-    tags:
-      - skip_ansible_lint
 
-  - block:
+  - name: Provision temporary user
+    block:
     - name: Generate a random username
       shell: echo $RANDOM | tr '[0-9]' '[a-zA-Z]'
       register: random_username
@@ -32,20 +32,22 @@
       no_log: Yes
 
     - name: Create postgresql temporary user
-      become: Yes
-      become_user: postgres
-      command: createuser --encrypted --no-password -D -R -s -l --replication {{ random_username.stdout }}
+      command: createuser --no-password -S -D {{ random_username.stdout }}
+      # command: createuser --encrypted --no-password -D -R -s -l --replication {{ random_username.stdout }}
       register: postgresql_termporary_user_created
 
-    - name: Alter temporary role
-      become: Yes
-      become_user: postgres
+    - name: Set up temporary user
       command: psql --command="ALTER USER {{ random_username.stdout }} WITH PASSWORD '{{ random_string.stdout }}';"
-      no_log: Yes
 
     - name: Set fact for the new backup postgresql_backup_executor
       set_fact: postgresql_backup_executor={{ random_username.stdout }}
 
+    - name: Grant privileges to temporary user
+      command: psql --command="{{ item }}";
+      loop: "{{ provision_temporary_user_grant_privileges_commands }}"
+
+    become: Yes
+    become_user: postgres
     when: provision_temporary_user
 
   when: ensure_postgresql_is_running or provision_temporary_user
@@ -103,6 +105,10 @@
         Password: "{{ random_string.stdout }}"
     no_log: Yes
     changed_when: No
+
+  - name: Revoke privileges to temporary user
+    command: psql --command="{{ item }};"
+    loop: "{{ provision_temporary_user_revoke_privileges_commands }}"
 
   - name: Drop the temporary_user
     command: dropuser "{{ postgresql_backup_executor }}"
