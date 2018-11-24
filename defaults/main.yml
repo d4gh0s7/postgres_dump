@@ -21,5 +21,4 @@ postgresql_dumpall_params:
 
 # Set cleanup_after_backup to No, to store the backup files along with the compressed version
 cleanup_after_backup: Yes
-
 ...

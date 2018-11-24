@@ -20,10 +20,14 @@ galaxy_info:
     - xenial
     - trusty
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
  
 >>>>>>> a7ce879b6e56b80c52fe3f6d9a8ea609a016d5ed
+=======
+
+>>>>>>> 7f2e0a28aa94e5c79642a6ea73ee9c3c47ce0722
   galaxy_tags:
     - postgresql
     - postgres
