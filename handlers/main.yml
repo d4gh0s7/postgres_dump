@@ -1,21 +1,3 @@
 ---
 # handlers file for postgres_dump
-
-- name: Start postgresql
-  systemd:
-    state: started
-    name: postgresql-{{ postgresql_version }}
-  register: pg_status
-
-- name: Stop postgresql
-  systemd:
-    state: stopped
-    name: postgresql-{{ postgresql_version }}
-  register: pg_status
-
-- name: Reload postgresql
-  systemd:
-    state: reloaded
-    name: postgresql-{{ postgresql_version }}
-  register: pg_status
 ...
