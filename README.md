@@ -34,8 +34,18 @@ postgresql_dumpall_params:
 # The user will be deleted immediately after the backup execution;
 # the username will be logged to the file system
 # and included in the backup archive.
-# This feature is still beta.
+# This feature is still experimental, though currently stable.
 provision_temporary_user: Yes
+
+# List the commands to run in order to grant the necessary privileges to the temporary user
+provision_temporary_user_grant_privileges_commands:
+  - GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
+  - GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
+
+# List the commands to run in order to revoke the assigned privileges from the temporary user
+provision_temporary_user_revoke_privileges_commands:
+  - REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
+  - REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
 ```
 
 Variables set in `vars/main.yml`:
