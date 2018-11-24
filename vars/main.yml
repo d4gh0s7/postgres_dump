@@ -7,6 +7,8 @@
 # set it manually only if you know what you are doing.
 postgresql_version: 0
 
+postgresql_dump_filename: "full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql"
+
 provision_temporary_user_grant_privileges_commands:
   - GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
   - GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}

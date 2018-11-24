@@ -53,6 +53,9 @@ Variables set in `vars/main.yml`:
 # Set the value manually only if you know what you are doing.
 postgresql_version: 0
 
+# Set the backup file name. The dump will be created in the postgresql default backups folder.
+postgresql_dump_filename: "full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql"
+
 # List the commands to run in order to grant the necessary privileges to the temporary user.
 provision_temporary_user_grant_privileges_commands:
   - GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
@@ -77,10 +80,8 @@ Use the role as follow:
 
   roles:
     - postgres_dump
-      provision_temporary_user: Yes
-      postgresql_dumpall_params:
-        - --clean
-        - --if-exists
+      provision_temporary_user: No
+      cleanup_after_backup: No
  ```
 
 ## License
