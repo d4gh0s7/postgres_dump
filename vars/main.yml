@@ -7,10 +7,17 @@
 # set it manually only if you know what you are doing.
 postgresql_version: 0
 
-# Set to No to skip the service postgresql status task
-# When set to No, this variable can be overruled if provision_temporary_user is set to Yes
-ensure_postgresql_is_running: Yes
+provision_temporary_user_grant_privileges_commands:
+  - GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
+  - GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
 
-# Set cleanup_after_backup to No, to store the backup files along with the compressed version
-cleanup_after_backup: Yes
+# - name: Alter temporary user
+#   command: psql --command="ALTER DEFAULT PRIVILEGES IN SCHEMA pg_catalog GRANT SELECT ON TABLES TO {{ random_username.stdout }};"
+
+# - name: Alter temporary user
+#   command: psql --command="ALTER DEFAULT PRIVILEGES IN SCHEMA pg_catalog GRANT SELECT, USAGE ON SEQUENCES TO {{ random_username.stdout }};"
+
+provision_temporary_user_revoke_privileges_commands:
+  - REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
+  - REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
 ...
