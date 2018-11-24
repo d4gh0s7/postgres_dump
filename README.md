@@ -74,11 +74,13 @@ Use the role as follow:
     - postgresql_databases
   become: True
   gather_facts: True
-  vars_files:
-    - ./group_vars/all.yml
+
   roles:
     - postgres_dump
-      
+      provision_temporary_user: Yes
+      postgresql_dumpall_params:
+        - --clean
+        - --if-exists
  ```
 
 ## License
