@@ -7,11 +7,11 @@
   changed_when: No
 
 - name: Save the postgresql version
-  set_fact: 
+  set_fact:
     postgresql_version: "{{ pg_version.stdout }}"
   when: pg_version and postgresql_version == 0
 
-- name: Check the postgresql service state 
+- name: Check the postgresql service state
   block:
   - name: Collect facts about system services
     service_facts:
@@ -80,7 +80,7 @@
   when: not postgresql_provision_temporary_user
 
 - name: Save the postgresql_backup_log_file path and name in a variable
-  set_fact: 
+  set_fact:
     postgresql_backup_log_file: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.log"
 
 - name: Log the postgresql_backup_executor to the file system
@@ -124,7 +124,7 @@
   register: postgres_dump_info
 
 - name: Determine a file path and a name to store the sha256 checksum
-  set_fact: 
+  set_fact:
     checksum_file: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.sha256_checksum"
   when: postgres_dump_info
 
