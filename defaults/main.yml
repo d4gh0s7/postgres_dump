@@ -1,7 +1,7 @@
 ---
 # defaults file for postgres_dump
 
-postgres_base_folder: /var/lib/pgsql
+postgresql_base_folder: /var/lib/pgsql
 
 postgresql_backup_executor: postgres
 
@@ -9,16 +9,16 @@ postgresql_backup_owner: postgres
 
 # Flag to Yes in order to provision a temporay unprivileged user and run the pg_dumpall with it
 # The user will be deleted immediateluy after
-provision_temporary_user: Yes
+postgresql_provision_temporary_user: Yes
 
 # Set to No to skip the service postgresql status task
-# When set to No, this variable can be overruled if provision_temporary_user is set to Yes
-ensure_postgresql_is_running: Yes
+# When set to No, this variable can be overruled if postgresql_provision_temporary_user is set to Yes
+postgresql_check_service_state: Yes
 
 postgresql_dumpall_params:
   - --clean
   - --if-exists
 
 # Set cleanup_after_backup to No, to store the backup files along with the compressed version
-cleanup_after_backup: Yes
+postgresql_cleanup_after_backup: Yes
 ...
