@@ -28,23 +28,44 @@
       register: pg_random_username
 
     - name: Generate a random string
-      command: openssl rand -base64 24
+      shell: dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2- | rev
+      # command: openssl rand -base64 24
       register: pg_random_str
-
-    - name: Create the temporary user
-      command: createuser --no-password -S -D {{ pg_random_username.stdout }}
-      register: postgresql_termporary_user_created
-
-    - name: Secure the temporary user access
-      command: psql --command="ALTER USER {{ pg_random_username.stdout }} WITH PASSWORD '{{ pg_random_str.stdout }}';"
 
     - name: Set the temporary user as postgresql_backup_executor
       set_fact:
         postgresql_backup_executor: "{{ pg_random_username.stdout }}"
 
-    - name: Grant privileges to the temporary user
-      command: psql --command="{{ item }}";
-      loop: "{{ postgresql_provision_temporary_user_grant_privileges_commands }}"
+    - name: Create the temporary user
+      postgresql_user:
+        name: "{{ postgresql_backup_executor }}"
+        password: "{{ pg_random_str.stdout }}"
+        role_attr_flags: NOSUPERUSER,NOCREATEDB,NOCREATEROLE,NOBYPASSRLS
+        expires: "{{ ansible_date_time.iso8601[:19] | to_datetime(fmt) | add_time(days=1) }}"
+      vars:
+        fmt: "%Y-%m-%dT%H:%M:%S"
+
+    - name: Grant select privileges on all the tables in the pg_catalog schema
+      postgresql_privs:
+        database: postgres
+        state: present
+        privs: SELECT
+        objs: ALL_IN_SCHEMA
+        type: table
+        schema: pg_catalog
+        roles: "{{ postgresql_backup_executor }}"
+        grant_option: Yes
+
+    - name: Grant select and usage privileges on all the sequences in the pg_catalog schema
+      postgresql_privs:
+        database: postgres
+        state: present
+        privs: SELECT,USAGE
+        objs: ALL_IN_SCHEMA
+        type: sequence
+        schema: pg_catalog
+        roles: "{{ postgresql_backup_executor }}"
+        grant_option: Yes
 
     no_log: Yes
     become: Yes
@@ -104,12 +125,30 @@
         Password: "{{ pg_random_str.stdout }}"
     changed_when: No
 
-  - name: Revoke the privileges from the temporary user
-    command: psql --command="{{ item }};"
-    loop: "{{ postgresql_provision_temporary_user_revoke_privileges_commands }}"
+  - name: Revoke all the privileges on all the tables in the pg_catalog schema from the temporary user
+    postgresql_privs:
+      database: postgres
+      state: absent
+      privs: SELECT
+      objs: ALL_IN_SCHEMA
+      type: table
+      schema: pg_catalog
+      roles: "{{ postgresql_backup_executor }}"
+
+  - name: Revoke all the privileges on all the sequences in the pg_catalog schema from the temporary user
+    postgresql_privs:
+      database: postgres
+      state: absent
+      privs: SELECT,USAGE
+      objs: ALL_IN_SCHEMA
+      type: sequence
+      schema: pg_catalog
+      roles: "{{ postgresql_backup_executor }}"
 
   - name: Drop the temporary user
-    command: dropuser "{{ postgresql_backup_executor }}"
+    postgresql_user:
+      name: "{{ postgresql_backup_executor }}"
+      state: absent
 
   no_log: Yes
   become: Yes
