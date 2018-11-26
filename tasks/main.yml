@@ -15,32 +15,32 @@
   block:
   - name: Collect facts about system services
     service_facts:
-    register: services_state
+    register: pg_services_state
 
   - name: Determine if postgresql-{{ postgresql_version }} is running
     assert:
-      that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
+      that: pg_services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
 
   - name: Provision a temporary unprivileged user
     block:
     - name: Generate a random username
       shell: echo $RANDOM | tr '[0-9]' '[a-zA-Z]'
-      register: random_username
+      register: pg_random_username
 
     - name: Generate a random string
       command: openssl rand -base64 24
-      register: random_string
+      register: pg_random_str
 
     - name: Create the temporary user
-      command: createuser --no-password -S -D {{ random_username.stdout }}
+      command: createuser --no-password -S -D {{ pg_random_username.stdout }}
       register: postgresql_termporary_user_created
 
     - name: Secure the temporary user access
-      command: psql --command="ALTER USER {{ random_username.stdout }} WITH PASSWORD '{{ random_string.stdout }}';"
+      command: psql --command="ALTER USER {{ pg_random_username.stdout }} WITH PASSWORD '{{ pg_random_str.stdout }}';"
 
     - name: Set the temporary user as postgresql_backup_executor
       set_fact:
-        postgresql_backup_executor: "{{ random_username.stdout }}"
+        postgresql_backup_executor: "{{ pg_random_username.stdout }}"
 
     - name: Grant privileges to the temporary user
       command: psql --command="{{ item }}";
@@ -66,19 +66,6 @@
   assert:
     that: pg_backups_path.stat.exists and pg_backups_path.stat.isdir
 
-- name: Execute the full database dump with pg_dumpall
-  become: Yes
-  become_user: "{{ postgresql_backup_owner }}"
-  command: |
-     pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
-     -U {{ postgresql_backup_executor }} \
-     --no-password \
-     --file {{ postgresql_dump_filename }}
-  args:
-    chdir: "{{ postgresql_dump_fullpath }}"
-  changed_when: No
-  when: not postgresql_provision_temporary_user
-
 - name: Save the postgresql_backup_log_file path and name in a variable
   set_fact:
     postgresql_backup_log_file: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.log"
@@ -92,6 +79,19 @@
     group: "{{ postgresql_backup_owner }}"
     mode: 0400
 
+- name: Execute the full database dump with pg_dumpall
+  become: Yes
+  become_user: "{{ postgresql_backup_owner }}"
+  command: |
+     pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
+     -U {{ postgresql_backup_executor }} \
+     --no-password \
+     --file {{ postgresql_dump_filename }}
+  args:
+    chdir: "{{ postgresql_dump_fullpath }}"
+  changed_when: No
+  when: not postgresql_provision_temporary_user
+
 - name: Run pg_dumpall as temporary_user
   block:
   - name: Execute the full database dump as temporary user
@@ -101,7 +101,7 @@
         -W --file {{ postgresql_dump_filename }}
       chdir: "{{ postgresql_dump_fullpath }}"
       responses:
-        Password: "{{ random_string.stdout }}"
+        Password: "{{ pg_random_str.stdout }}"
     changed_when: No
 
   - name: Revoke the privileges from the temporary user
@@ -121,18 +121,18 @@
     path: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}"
     checksum_algorithm: sha256
     get_checksum: Yes
-  register: postgres_dump_info
+  register: pg_dumpall_info
 
 - name: Determine a file path and a name to store the sha256 checksum
   set_fact:
     checksum_file: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.sha256_checksum"
-  when: postgres_dump_info
+  when: pg_dumpall_info
 
 - name: Save the sha256 checksum to the file system
   lineinfile:
     create: Yes
     path: "{{ checksum_file }}"
-    line: "{{ postgres_dump_info.stat.checksum }} {{ postgresql_dump_filename }}"
+    line: "{{ pg_dumpall_info.stat.checksum }} {{ postgresql_dump_filename }}"
     owner: "{{ postgresql_backup_owner }}"
     group: "{{ postgresql_backup_owner }}"
     mode: 0400
@@ -141,13 +141,13 @@
   command: sha256sum --check {{ checksum_file }}
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
-  register: checksum_validation
+  register: pg_dumpall_checksum_validation
   changed_when: No
 
-- name: Verify the backup sha256 checksum as PoC
+- name: PoC verification of the backup sha256 checksum
   assert:
     that:
-     - "'OK' in checksum_validation.stdout"
+     - "'OK' in pg_dumpall_checksum_validation.stdout"
 
 - name: Create a compressed archive of the database full dump
   archive:
@@ -161,9 +161,9 @@
     mode: 0400
     remove: "{{ postgresql_cleanup_after_backup }}"
     format: gz
-  register: postgresql_dump_stored
+  register: pg_dumpall_storage
 
 - name: List the archived files
   debug:
-    var: postgresql_dump_stored.archived
+    var: pg_dumpall_storage.archived
 ...
