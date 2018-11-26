@@ -6,12 +6,12 @@
   register: pg_version
   changed_when: No
 
-- name: Store the postgresql version in postgresql_version
+- name: Save the postgresql version
   set_fact: 
     postgresql_version: "{{ pg_version.stdout }}"
   when: pg_version and postgresql_version == 0
 
-- name: Ensure postgresql is running
+- name: Check the postgresql service state 
   block:
   - name: Collect facts about system services
     service_facts:
@@ -21,7 +21,7 @@
     assert:
       that: services_state.ansible_facts.services['postgresql-{{ postgresql_version }}.service'].state == "running"
 
-  - name: Provision temporary user
+  - name: Provision a temporary unprivileged user
     block:
     - name: Generate a random username
       shell: echo $RANDOM | tr '[0-9]' '[a-zA-Z]'
@@ -30,47 +30,43 @@
     - name: Generate a random string
       command: openssl rand -base64 24
       register: random_string
-      no_log: Yes
 
-    - name: Create postgresql temporary user
+    - name: Create the temporary user
       command: createuser --no-password -S -D {{ random_username.stdout }}
       register: postgresql_termporary_user_created
 
-    - name: Set up the temporary user
+    - name: Secure the temporary user access
       command: psql --command="ALTER USER {{ random_username.stdout }} WITH PASSWORD '{{ random_string.stdout }}';"
-      no_log: Yes
 
-    - name: Set fact for the new backup postgresql_backup_executor
+    - name: Set the temporary user as postgresql_backup_executor
       set_fact:
         postgresql_backup_executor: "{{ random_username.stdout }}"
 
     - name: Grant privileges to the temporary user
       command: psql --command="{{ item }}";
-      loop: "{{ provision_temporary_user_grant_privileges_commands }}"
+      loop: "{{ postgresql_provision_temporary_user_grant_privileges_commands }}"
 
+    no_log: Yes
     become: Yes
     become_user: postgres
-    when: provision_temporary_user
+    when: postgresql_provision_temporary_user
 
-  when: ensure_postgresql_is_running or provision_temporary_user
+  when: postgresql_check_service_state or postgresql_provision_temporary_user
 
-# - name: Determine the postgresql dump file name
-#   set_fact: postgresql_dump_filename=full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql
-
-- name: Set the full path of the postgresql dump
+- name: Set the full path to store the database backup
   set_fact:
-    postgresql_dump_fullpath: "{{ postgres_base_folder }}/{{ postgresql_version }}/backups"
+    postgresql_dump_fullpath: "{{ postgresql_base_folder }}/{{ postgresql_version }}/backups"
 
 - name: Store the backup path in a variable
   stat:
     path: "{{ postgresql_dump_fullpath }}"
   register: pg_backups_path
 
-- name: Determine if the backups path exists
+- name: Determine if the backups directory path exists
   assert:
     that: pg_backups_path.stat.exists and pg_backups_path.stat.isdir
 
-- name: Run pg_dumpall
+- name: Execute the full database dump with pg_dumpall
   become: Yes
   become_user: "{{ postgresql_backup_owner }}"
   command: |
@@ -80,9 +76,8 @@
      --file {{ postgresql_dump_filename }}
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
-  no_log: Yes
   changed_when: No
-  when: not provision_temporary_user
+  when: not postgresql_provision_temporary_user
 
 - name: Save the postgresql_backup_log_file path and name in a variable
   set_fact: 
@@ -99,7 +94,7 @@
 
 - name: Run pg_dumpall as temporary_user
   block:
-  - name: Execute the postgresql full dump as temporary user
+  - name: Execute the full database dump as temporary user
     expect:
       command: pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %}
         -h 127.0.0.1 -U {{ postgresql_backup_executor }}
@@ -107,33 +102,33 @@
       chdir: "{{ postgresql_dump_fullpath }}"
       responses:
         Password: "{{ random_string.stdout }}"
-    no_log: Yes
     changed_when: No
 
-  - name: Revoke privileges to temporary user
+  - name: Revoke the privileges from the temporary user
     command: psql --command="{{ item }};"
-    loop: "{{ provision_temporary_user_revoke_privileges_commands }}"
+    loop: "{{ postgresql_provision_temporary_user_revoke_privileges_commands }}"
 
-  - name: Drop the temporary_user
+  - name: Drop the temporary user
     command: dropuser "{{ postgresql_backup_executor }}"
 
+  no_log: Yes
   become: Yes
   become_user: "{{ postgresql_backup_owner }}"
-  when: provision_temporary_user
+  when: postgresql_provision_temporary_user
 
-- name: Stat the full postgresql full dump
+- name: Determine the sha256 checksum of the database full dump file
   stat:
     path: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}"
     checksum_algorithm: sha256
     get_checksum: Yes
   register: postgres_dump_info
 
-- name: Save the checksum file's path and name in a variable
+- name: Determine a file path and a name to store the sha256 checksum
   set_fact: 
     checksum_file: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.sha256_checksum"
   when: postgres_dump_info
 
-- name: Store the postgresql full dump file checksum to the file system
+- name: Save the sha256 checksum to the file system
   lineinfile:
     create: Yes
     path: "{{ checksum_file }}"
@@ -142,19 +137,19 @@
     group: "{{ postgresql_backup_owner }}"
     mode: 0400
 
-- name: Run the checksum validation
+- name: Run the sha256 checksum validation
   command: sha256sum --check {{ checksum_file }}
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
   register: checksum_validation
   changed_when: No
 
-- name: Test the checksum validation
+- name: Verify the backup sha256 checksum as PoC
   assert:
     that:
      - "'OK' in checksum_validation.stdout"
 
-- name: Create a compressed archive of the postgresql full dump
+- name: Create a compressed archive of the database full dump
   archive:
     path:
       - "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}"
@@ -164,7 +159,7 @@
     owner: "{{ postgresql_backup_owner }}"
     group: "{{ postgresql_backup_owner }}"
     mode: 0400
-    remove: "{{ cleanup_after_backup }}"
+    remove: "{{ postgresql_cleanup_after_backup }}"
     format: gz
   register: postgresql_dump_stored
 
