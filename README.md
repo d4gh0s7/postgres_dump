@@ -41,9 +41,13 @@ postgresql_provision_temporary_user: Yes
 # The task will be executed in any case when postgresql_provision_temporary_user is flagged to Yes
 postgresql_check_service_state: Yes
 
-# The options passed to the pg_dumpall command
-# For a full list check the postgresql documentation at:
-# https://www.postgresql.org/docs/11/app-pg-dumpall.html
+# Do NOT set the following options, these flags are set during the main task executions and cannot be overruled
+# --host
+# --username
+# --[no]-password
+# --file
+# Refer to the official documentation for further settings: 
+# https://www.postgresql.org/docs/<your_postgresql_version>/app-pg-dumpall.html
 postgresql_dumpall_params:
   - --clean
   - --if-exists

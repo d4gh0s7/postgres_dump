@@ -122,7 +122,7 @@
   become_user: "{{ postgresql_backup_owner }}"
   command: |
      pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %} \
-     -U {{ postgresql_backup_executor }} \
+     --username {{ postgresql_backup_executor }} \
      --no-password \
      --file {{ postgresql_dump_filename }}
   args:
@@ -133,8 +133,8 @@
 - name: Execute the full database dump as temporary user
   expect:
     command: pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %}
-      -h 127.0.0.1 -U {{ postgresql_backup_executor }}
-      -W --file {{ postgresql_dump_filename }}
+      --host 127.0.0.1 --username {{ postgresql_backup_executor }}
+      --password --file {{ postgresql_dump_filename }}
     chdir: "{{ postgresql_dump_fullpath }}"
     responses:
       Password: "{{ pg_random_str.stdout }}"
