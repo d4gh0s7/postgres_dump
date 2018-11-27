@@ -8,7 +8,7 @@ Minimum required ansible version **2.5.0**
 
 ### Pre-conditions
 
-This role assumes that the peer authentication is enabled at least for the `posgres` user account. Further scenarios and authentication strategies detections will be progressively added.
+This role assumes that the **peer authentication** is enabled at least for the `postgres` (or for the account set through `postgresql_backup_owner`) user account. Further scenarios and authentication strategies detections will be progressively added.
 
 ## Features
 
@@ -18,7 +18,6 @@ To facilitate the remote system meeting the role's requirements, the variable `p
 
 - postgresql_provision_temporary_user
 This role can conditionally, when `postgresql_provision_temporary_user: Yes`, provision a **read only** user with a minimum set of privileges in order to execute the `pg_dumpall` command. This is a temporary user that will be dropped immediately after the database dump execution. It is flagged to **expire in 1h** in order to be inactive in a scenario where the database dump will be restored. The username is randomized and stored in a log file archived along with the database dump, to facilitate the deletion after the restore procedure.
-
 **This feature increases the security and may prevent any accidental or malicious data alteration during the database dump procedure.**
 
 - postgresql_dumpall_params
