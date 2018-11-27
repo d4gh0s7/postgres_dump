@@ -23,13 +23,21 @@
 
   - name: Provision a temporary unprivileged user
     block:
+    - name: Install requirememnts
+      pip:
+        name:
+          - pexpect
+          - psycopg2
+        umask: "0077"
+        extra_args: --user
+      when: postgresql_install_requirements
+
     - name: Generate a random username
       shell: echo $RANDOM | tr '[0-9]' '[a-zA-Z]'
       register: pg_random_username
 
     - name: Generate a random string
       shell: dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2- | rev
-      # command: openssl rand -base64 24
       register: pg_random_str
 
     - name: Set the temporary user as postgresql_backup_executor
@@ -66,8 +74,17 @@
         schema: pg_catalog
         roles: "{{ postgresql_backup_executor }}"
         grant_option: Yes
-
-    no_log: Yes
+    rescue:
+    - name: Rollback the temporary unprivileged user provisioning
+      set_fact:
+        postgresql_backup_executor: "{{ postgresql_backup_owner }}"
+        pg_cleanup_role: Yes
+    always:
+    - name: Set pg_temporary_role
+      set_fact:
+        pg_temporary_role: "{{ pg_random_username.stdout }}"
+        
+    no_log: No
     become: Yes
     become_user: postgres
     when: postgresql_provision_temporary_user
@@ -100,7 +117,7 @@
     group: "{{ postgresql_backup_owner }}"
     mode: 0400
 
-- name: Execute the full database dump with pg_dumpall
+- name: Execute the full database dump
   become: Yes
   become_user: "{{ postgresql_backup_owner }}"
   command: |
@@ -111,20 +128,24 @@
   args:
     chdir: "{{ postgresql_dump_fullpath }}"
   changed_when: No
-  when: not postgresql_provision_temporary_user
+  when: not postgresql_provision_temporary_user or pg_cleanup_role is defined
 
-- name: Run pg_dumpall as temporary_user
+- name: Execute the full database dump as temporary user
+  expect:
+    command: pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %}
+      -h 127.0.0.1 -U {{ postgresql_backup_executor }}
+      -W --file {{ postgresql_dump_filename }}
+    chdir: "{{ postgresql_dump_fullpath }}"
+    responses:
+      Password: "{{ pg_random_str.stdout }}"
+  changed_when: No
+  no_log: No
+  become: Yes
+  become_user: "{{ postgresql_backup_owner }}"
+  when: postgresql_provision_temporary_user and pg_cleanup_role is not defined
+
+- name: Clean up the temporary role
   block:
-  - name: Execute the full database dump as temporary user
-    expect:
-      command: pg_dumpall {% for command_flag in postgresql_dumpall_params %} {{ command_flag }} {% endfor %}
-        -h 127.0.0.1 -U {{ postgresql_backup_executor }}
-        -W --file {{ postgresql_dump_filename }}
-      chdir: "{{ postgresql_dump_fullpath }}"
-      responses:
-        Password: "{{ pg_random_str.stdout }}"
-    changed_when: No
-
   - name: Revoke all the privileges on all the tables in the pg_catalog schema from the temporary user
     postgresql_privs:
       database: postgres
@@ -133,7 +154,7 @@
       objs: ALL_IN_SCHEMA
       type: table
       schema: pg_catalog
-      roles: "{{ postgresql_backup_executor }}"
+      roles: "{{ pg_temporary_role }}"
 
   - name: Revoke all the privileges on all the sequences in the pg_catalog schema from the temporary user
     postgresql_privs:
@@ -143,17 +164,17 @@
       objs: ALL_IN_SCHEMA
       type: sequence
       schema: pg_catalog
-      roles: "{{ postgresql_backup_executor }}"
+      roles: "{{ pg_temporary_role }}"
 
   - name: Drop the temporary user
     postgresql_user:
-      name: "{{ postgresql_backup_executor }}"
+      name: "{{ pg_temporary_role }}"
       state: absent
 
-  no_log: Yes
+  no_log: No
   become: Yes
   become_user: "{{ postgresql_backup_owner }}"
-  when: postgresql_provision_temporary_user
+  when: postgresql_provision_temporary_user or pg_cleanup_role is defined
 
 - name: Determine the sha256 checksum of the database full dump file
   stat:
@@ -167,7 +188,7 @@
     checksum_file: "{{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}.sha256_checksum"
   when: pg_dumpall_info
 
-- name: Save the sha256 checksum to the file system
+- name: Save the sha256 checksum to the log file
   lineinfile:
     create: Yes
     path: "{{ checksum_file }}"
@@ -187,6 +208,13 @@
   assert:
     that:
      - "'OK' in pg_dumpall_checksum_validation.stdout"
+
+- name: Write the backup file path and name to the log file
+  lineinfile:
+    state: present
+    path: "{{ postgresql_backup_log_file }}"
+    line: "Backup file path and name: {{ postgresql_dump_fullpath }}/{{ postgresql_dump_filename }}"
+    insertafter: EOF
 
 - name: Create a compressed archive of the database full dump
   archive:
