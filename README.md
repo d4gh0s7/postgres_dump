@@ -37,7 +37,8 @@ postgresql_backup_owner: postgres
 # This feature is still experimental, though currently stable.
 postgresql_provision_temporary_user: Yes
 
-# Set to No to skip the service postgresql state task
+# Set to No to skip the service postgresql state task;
+# The task will be executed in any case when postgresql_provision_temporary_user is flagged to Yes
 postgresql_check_service_state: Yes
 
 # The options passed to the pg_dumpall command
