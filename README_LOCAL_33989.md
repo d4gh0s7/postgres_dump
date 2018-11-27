@@ -70,7 +70,7 @@ The role can be uesed, for instance, as follow:
 
   roles:
     - postgres_dump
-      postgresql_provision_temporary_user: Yes
+      postgresql_provision_temporary_user: No
       postgresql_cleanup_after_backup: Yes
  ```
 

@@ -1,6 +1,8 @@
 ---
 # defaults file for postgres_dump
 
+postgresql_install_requirements: No
+
 postgresql_base_folder: /var/lib/pgsql
 
 postgresql_backup_executor: postgres

@@ -56,6 +56,17 @@ postgresql_version: 0
 
 # Set the backup file name. The dump will be created in the postgresql default backups folder.
 postgresql_dump_filename: "full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql"
+
+# List the commands to run in order to grant the necessary privileges to the temporary user.
+postgresql_provision_temporary_user_grant_privileges_commands:
+  - GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
+  - GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
+
+# List the commands to run in order to revoke the assigned privileges from the temporary user
+# and allow the dropuser command.
+postgresql_provision_temporary_user_revoke_privileges_commands:
+  - REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
+  - REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
 ```
 
 ## Example Playbook
@@ -70,8 +81,8 @@ The role can be uesed, for instance, as follow:
 
   roles:
     - postgres_dump
-      postgresql_provision_temporary_user: Yes
-      postgresql_cleanup_after_backup: Yes
+      postgresql_provision_temporary_user: No
+      postgresql_cleanup_after_backup: No
  ```
 
 ## License

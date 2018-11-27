@@ -70,7 +70,11 @@ The role can be uesed, for instance, as follow:
 
   roles:
     - postgres_dump
+<<<<<<< HEAD
+      postgresql_provision_temporary_user: No
+=======
       postgresql_provision_temporary_user: Yes
+>>>>>>> d0e4c2857829faaf89fce37e17137fe449eda70a
       postgresql_cleanup_after_backup: Yes
  ```
 
