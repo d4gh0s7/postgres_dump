@@ -8,7 +8,7 @@ Minimum required ansible version **2.5.0**
 
 ### Pre-conditions
 
-This role assumes that the **peer authentication** is enabled at least for the `postgres` (or for the account set through `postgresql_backup_owner`) user account. Further scenarios and authentication strategies detections will be progressively added.
+This role assumes that the **peer authentication** is enabled at least for the `postgres` (or for the role set through `postgresql_backup_owner`) user account. Further scenarios and authentication strategies detections will be progressively added.
 
 ## Features
 
