@@ -83,7 +83,7 @@
     - name: Set pg_temporary_role
       set_fact:
         pg_temporary_role: "{{ pg_random_username.stdout }}"
-        
+
     no_log: No
     become: Yes
     become_user: postgres
