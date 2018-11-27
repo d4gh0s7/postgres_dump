@@ -13,6 +13,12 @@ Variables set in `defaults/main.yml`:
 ```yaml
 # defaults file for postgres_dump
 
+# Mark to Yes when postgresql_provision_temporary_user
+# and the remote system does not meet the following requirements:
+# psycopg2
+# pexpect
+postgresql_install_requirements: No
+
 # The base postgresql path;
 # This variable will be used to determine the backup storage path.
 postgresql_base_folder: /var/lib/pgsql
