@@ -22,8 +22,6 @@ galaxy_info:
 
   galaxy_tags:
     - postgresql
-    - postgresql-dump
-    - postgresql-database-dump
     - postgres
     - dump
     - backup
