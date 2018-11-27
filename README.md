@@ -13,6 +13,12 @@ Variables set in `defaults/main.yml`:
 ```yaml
 # defaults file for postgres_dump
 
+# Mark to Yes when postgresql_provision_temporary_user
+# and the remote system does not meet the following requirements:
+# psycopg2
+# pexpect
+postgresql_install_requirements: No
+
 # The base postgresql path;
 # This variable will be used to determine the backup storage path.
 postgresql_base_folder: /var/lib/pgsql
@@ -31,7 +37,8 @@ postgresql_backup_owner: postgres
 # This feature is still experimental, though currently stable.
 postgresql_provision_temporary_user: Yes
 
-# Set to No to skip the service postgresql state task
+# Set to No to skip the service postgresql state task;
+# The task will be executed in any case when postgresql_provision_temporary_user is flagged to Yes
 postgresql_check_service_state: Yes
 
 # The options passed to the pg_dumpall command
@@ -56,17 +63,6 @@ postgresql_version: 0
 
 # Set the backup file name. The dump will be created in the postgresql default backups folder.
 postgresql_dump_filename: "full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql"
-
-# List the commands to run in order to grant the necessary privileges to the temporary user.
-postgresql_provision_temporary_user_grant_privileges_commands:
-  - GRANT SELECT ON ALL TABLES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
-  - GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA pg_catalog TO {{ postgresql_backup_executor }}
-
-# List the commands to run in order to revoke the assigned privileges from the temporary user
-# and allow the dropuser command.
-postgresql_provision_temporary_user_revoke_privileges_commands:
-  - REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
-  - REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA pg_catalog FROM {{ postgresql_backup_executor }}
 ```
 
 ## Example Playbook

@@ -27,6 +27,3 @@ galaxy_info:
     - backup
 
 dependencies: []
-
-# psycopg2
-# pexpect
