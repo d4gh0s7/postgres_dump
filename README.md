@@ -13,7 +13,7 @@ This role assumes that the **peer authentication** is enabled for the user `post
 ## Features
 
 - `postgresql_install_requirements`:
-This role relies on the ansible modules (postgresql_user)[https://docs.ansible.com/ansible/latest/modules/postgresql_user_module.html], (postgresql_privs)[https://docs.ansible.com/ansible/latest/modules/postgresql_privs_module.html] and (expect)[https://docs.ansible.com/ansible/latest/modules/expect_module.html] to provision the temporary user when `postgresql_provision_temporary_user` is set to Yes.
+This role relies on the ansible modules [postgresql_user](https://docs.ansible.com/ansible/latest/modules/postgresql_user_module.html), [postgresql_privs](https://docs.ansible.com/ansible/latest/modules/postgresql_privs_module.html) and [expect](https://docs.ansible.com/ansible/latest/modules/expect_module.html) to provision the temporary user when `postgresql_provision_temporary_user` is set to Yes.
 To setup the target system and meet the role's requirements, the variable `postgresql_install_requirements` may be set to Yes and the necessary dependencies will be checked and eventually installed, preventing a failure of the database dump.
 
 - `postgresql_provision_temporary_user`:
