@@ -1,11 +1,12 @@
 ---
 # vars file for postgres_dump
 
-# Dynamically determined within the main task
-# postgresql version is stored in format: Major.Minor
-# This variable is merely used to determine the path of the postgresql backups folder;
-# set it manually only if you know what you are doing.
+# Dynamically determined within the main task.
+# The postgresql version is stored in format: Major.Minor
+# This variable is used merely to determine the path to the postgresql backups folder;
+# Set the value manually only if you know what you are doing.
 postgresql_version: 0
 
+# Set the backup file name. The dump will be created in the postgresql default backups folder.
 postgresql_dump_filename: "full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql"
 ...

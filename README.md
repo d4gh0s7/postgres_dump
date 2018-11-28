@@ -8,20 +8,20 @@ Minimum required ansible version **2.5.0**
 
 ### Pre-conditions
 
-This role assumes that the **peer authentication** is enabled at least for the `postgres` (or for the role set through `postgresql_backup_owner`) user account. Further scenarios and authentication strategies detections will be progressively added.
+This role assumes that the **peer authentication** is enabled for the user `postgres` (or for the role set through the `postgresql_backup_owner` variable). Different scenarios and detections of authentication strategies will be progressively implemented.
 
 ## Features
 
 - `postgresql_install_requirements`:
-This role relies on the ansible modules `postgresql_user` / `postgresql_privs` and `expect` in order to perform the tasks related to the temporary user provisioning, when `postgresql_provision_temporary_user` is set to Yes.
-To facilitate the remote system meeting the role's requirements, the variable `postgresql_install_requirements` may be set to Yes and the necessary dependencies will be checked and eventually installed, preventing a failure of the database dump.
+This role relies on the ansible modules (postgresql_user)[https://docs.ansible.com/ansible/latest/modules/postgresql_user_module.html], (postgresql_privs)[https://docs.ansible.com/ansible/latest/modules/postgresql_privs_module.html] and (expect)[https://docs.ansible.com/ansible/latest/modules/expect_module.html] to provision the temporary user when `postgresql_provision_temporary_user` is set to Yes.
+To setup the target system and meet the role's requirements, the variable `postgresql_install_requirements` may be set to Yes and the necessary dependencies will be checked and eventually installed, preventing a failure of the database dump.
 
 - `postgresql_provision_temporary_user`:
-This role can conditionally, when `postgresql_provision_temporary_user: Yes`, provision a **read only** user with a minimum set of privileges in order to execute the `pg_dumpall` command. This is a temporary user that will be dropped immediately after the database dump execution. It is flagged to **expire in 1h** in order to be inactive in a scenario where the database dump will be restored. The username is randomized and stored in a log file archived along with the database dump, to facilitate the deletion after the restore procedure.
+This role can conditionally, when `postgresql_provision_temporary_user: Yes`, provision a **read only** user with a minimum set of privileges in order to execute the `pg_dumpall` command. This is a temporary user that will be dropped immediately after the database dump execution. It is flagged to **expire in 1d** in order to be inactive in a scenario where the database dump will be restored. The username is randomized and stored in a log file archived along with the database dump, to facilitate the deletion after the restore procedure.
 **This feature increases the security and may prevent any accidental or malicious data alteration during the database dump procedure.**
 
 - `postgresql_dumpall_params`:
-This variable allows to pass a list of options and customize the databse dump command. Refer to the role variables set in `defaults/main.yml`, and documented below, for the correct implementation of it
+The database dump command can be customized providing a list of options. Refer to the role variables set in `defaults/main.yml`, and documented below, for the correct implementation of it
 
 ## Role Variables
 
@@ -73,19 +73,6 @@ postgresql_dumpall_params:
 postgresql_cleanup_after_backup: Yes
 ```
 
-Variables set in `vars/main.yml`:
-
-```yaml
-# Dynamically determined within the main task.
-# The postgresql version is stored in format: Major.Minor
-# This variable is used merely to determine the path to the postgresql backups folder;
-# Set the value manually only if you know what you are doing.
-postgresql_version: 0
-
-# Set the backup file name. The dump will be created in the postgresql default backups folder.
-postgresql_dump_filename: "full_dump-{{ ansible_date_time.iso8601_basic_short }}.sql"
-```
-
 ## Example Playbook
 
 The role can be uesed, for instance, as follow:
@@ -97,7 +84,7 @@ The role can be uesed, for instance, as follow:
   gather_facts: True
 
   roles:
-    - postgres_dump
+    - role: postgres_dump
       postgresql_provision_temporary_user: Yes
       postgresql_cleanup_after_backup: Yes
  ```
